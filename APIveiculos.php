@@ -25,6 +25,11 @@ switch ($request_method) {
         $id = intval($_GET["id"]);
         remover_veiculo($id);
         break;
+    case 'PUT':
+        // Editar veículo
+        // $id = intval($_GET["id"]);
+        editar_veiculo();
+        break;
     default:
         // Invalid Request Method
         header("Método de requisição inválido");
@@ -66,12 +71,20 @@ function inserir_veiculo()
     global $connection;
 
     // definindo dados de acordo com a tabela
-    $fabricante = $_POST["fabricante"];
-    $modelo = $_POST["modelo"];
-    $cor = $_POST["cor"];
-    $placa = $_POST["placa"];
-    $ano = $_POST["ano"];
-    $valor = $_POST["valor"];
+
+    // Takes raw data from the request
+    $json = file_get_contents('php://input');
+
+    // Converts it into a PHP object
+    $data = json_decode($json);
+
+    // $id = $data->id;
+    $fabricante = $data->fabricante;
+    $modelo = $data->modelo;
+    $cor = $data->cor;
+    $placa = $data->placa;
+    $ano = $data->ano;
+    $valor = $data->valor;
 
     // realizando a query
     $query = "INSERT INTO veiculos SET fabricante='{$fabricante}', modelo='{$modelo}', cor='{$cor}', placa='{$placa}', ano={$ano}, valor={$valor}";
@@ -97,7 +110,7 @@ function remover_veiculo($id)
     global $connection;
 
     // executando a requisição
-    $query = "DELETE FROM veiculos WHERE id=" . $id;
+    $query = "DELETE FROM veiculos WHERE id= " . $id;
 
     if (mysqli_query($connection, $query)) {
         // caso tenha um id especificado o veículo será removido do DB
@@ -115,4 +128,57 @@ function remover_veiculo($id)
     echo json_encode($response);
 }
 
-?>
+function editar_veiculo()
+{
+    global $connection;
+
+    // Convertemos para string o conteudo do arquivo e inserimos em um array para uso:
+
+    // parse_str(file_get_contents("php://input"), $post_vars);
+
+    // Takes raw data from the request
+    $json = file_get_contents('php://input');
+
+    // Converts it into a PHP object
+    $data = json_decode($json);
+
+
+
+    // Definimos as variáveis de acordo com a declaração dela no array, visto que no método PUT não temos a variável $_PUT para utilizarmos como anteriormente
+    $id = $data->id;
+    $fabricante = $data->fabricante;
+    $modelo = $data->modelo;
+    $cor = $data->cor;
+    $placa = $data->placa;
+    $ano = $data->ano;
+    $valor = $data->valor;
+
+    $query = "UPDATE veiculos SET fabricante='{$fabricante}', modelo='{$modelo}', cor='{$cor}', placa='{$placa}', ano={$ano}, valor={$valor} WHERE id=" . $id;
+    if (mysqli_query($connection, $query)) {
+        $response = array(
+            'status' => 1,
+            'status_message' => 'Veículo editado com sucesso'
+        );
+    } else {
+        $response = array(
+            'status' => 0,
+            'status_message' => 'Falha ao editar veículo.'
+        );
+    }
+    header('Content-Type: application/json');
+    echo json_encode($response);
+
+
+
+
+
+
+
+    // parse_str(file_get_contents("php://input"), $post_vars);
+    // $fabricante = $post_vars["fabricante"];
+    // $modelo = $post_vars["modelo"];
+    // $cor = $post_vars["cor"];
+    // $placa = $post_vars["placa"];
+    // $ano = $post_vars["ano"];
+    // $valor = $post_vars["valor"];
+}
